@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Secrets management cli"
 license-file = "LICENCE.md"
+repository = "https://github.com/Wertual08/enigmatic/tree/master"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
