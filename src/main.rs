@@ -37,9 +37,9 @@ fn main() {
             let registry_repository = RegistryRepository::open(&storage).unwrap();
             let entry_service = EntryService::new(registry_repository).unwrap();
             
-            println!("Registry [{}] content", entry_service.registry_name());
+            println!("Registry [{}] content:", entry_service.registry_name());
             for (name, entry) in entry_service.entries {
-                println!("{}: {}", name, entry.description)
+                println!("{:32}: {}", name, entry.description)
             }
         },
         CliCommand::Copy { name, password } => {

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::BTreeMap, io, time::{SystemTime, UNIX_EPOCH}};
 
 use sha3::{Digest, Sha3_256};
 
@@ -9,7 +9,7 @@ use super::EntryModel;
 pub struct EntryService {
     registry_repository: RegistryRepository,
     last_hash: [u8; 64],
-    pub entries: HashMap<String, EntryModel>,
+    pub entries: BTreeMap<String, EntryModel>,
 }
 
 impl EntryService {
@@ -17,7 +17,7 @@ impl EntryService {
         let mut result = Self {
             registry_repository,
             last_hash: [0u8; 64],
-            entries: HashMap::new(),
+            entries: BTreeMap::new(),
         };
 
         while let Some(entry_change) = result.registry_repository.read_operation()? {
