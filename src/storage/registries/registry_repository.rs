@@ -107,26 +107,29 @@ impl RegistryRepository {
 
     pub fn write_operation(&mut self, operation: &EntryOperationDto) -> Result<(), io::Error> {
         match operation {
-            EntryOperationDto::Add { hash, name, description, secret } => {
+            EntryOperationDto::Add { hash, timestamp, name, description, secret } => {
                 self.file.write(&1i32.to_le_bytes())?;
                 self.file.write(hash)?;
+                self.file.write(&timestamp.to_le_bytes())?;
 
                 write_string(&mut self.file, Some(name))?;
                 write_string(&mut self.file, Some(description))?;
                 write_bytes(&mut self.file, Some(secret))?;
             },
-            EntryOperationDto::Set { hash, src_name, dst_name, dst_description, dst_secret } => {
+            EntryOperationDto::Set { hash, timestamp, src_name, dst_name, dst_description, dst_secret } => {
                 self.file.write(&2i32.to_le_bytes())?;
                 self.file.write(hash)?;
+                self.file.write(&timestamp.to_le_bytes())?;
 
                 write_string(&mut self.file, Some(src_name))?;
                 write_string(&mut self.file, dst_name.as_ref().map(|o| o.as_str()))?;
                 write_string(&mut self.file, dst_description.as_ref().map(|o| o.as_str()))?;
                 write_bytes(&mut self.file, dst_secret.as_ref().map(|o| o.as_slice()))?;
             },
-            EntryOperationDto::Del { hash, name } => {
+            EntryOperationDto::Del { hash, timestamp, name } => {
                 self.file.write(&3i32.to_le_bytes())?;
                 self.file.write(hash)?;
+                self.file.write(&timestamp.to_le_bytes())?;
 
                 write_string(&mut self.file, Some(name))?;
             },
@@ -141,6 +144,7 @@ impl RegistryRepository {
                 1 => {
                     EntryOperationDto::Add { 
                         hash: read_bytes_array::<32>(&mut self.file)?, 
+                        timestamp: read_u128(&mut self.file)?,
                         name: read_string(&mut self.file)?.unwrap(), 
                         description: read_string(&mut self.file)?.unwrap(), 
                         secret: read_bytes(&mut self.file)?.unwrap(),
@@ -149,6 +153,7 @@ impl RegistryRepository {
                 2 => {
                     EntryOperationDto::Set { 
                         hash: read_bytes_array::<32>(&mut self.file)?, 
+                        timestamp: read_u128(&mut self.file)?,
                         src_name: read_string(&mut self.file)?.unwrap(), 
                         dst_name: read_string(&mut self.file)?, 
                         dst_description: read_string(&mut self.file)?, 
@@ -158,6 +163,7 @@ impl RegistryRepository {
                 3 => {
                     EntryOperationDto::Del { 
                         hash: read_bytes_array::<32>(&mut self.file)?, 
+                        timestamp: read_u128(&mut self.file)?,
                         name: read_string(&mut self.file)?.unwrap(),
                     }
                 },
@@ -220,6 +226,12 @@ fn read_i32(file: &mut File) -> Result<i32, io::Error> {
     let mut buffer = [0u8; 4];
     file.read_exact(buffer.as_mut_slice())?;
     Ok(i32::from_le_bytes(buffer))
+}
+
+fn read_u128(file: &mut File) -> Result<u128, io::Error> {
+    let mut buffer = [0u8; 16];
+    file.read_exact(buffer.as_mut_slice())?;
+    Ok(u128::from_le_bytes(buffer))
 }
 
 fn write_bytes(file: &mut File, data: Option<&[u8]>) -> Result<(), io::Error> {

@@ -1,6 +1,7 @@
 pub enum EntryOperationDto {
     Add {
         hash: [u8; 32],
+        timestamp: u128,
         name: String,
         description: String,
         secret: Vec<u8>,
@@ -8,6 +9,7 @@ pub enum EntryOperationDto {
 
     Set {
         hash: [u8; 32],
+        timestamp: u128,
         src_name: String,
         dst_name: Option<String>,
         dst_description: Option<String>,
@@ -16,6 +18,7 @@ pub enum EntryOperationDto {
 
     Del {
         hash: [u8; 32],
+        timestamp: u128,
         name: String,
     },
 }

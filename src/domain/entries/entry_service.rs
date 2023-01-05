@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, io, time::{SystemTime, UNIX_EPOCH}};
 
 use sha3::{Digest, Sha3_256};
 
@@ -22,10 +22,11 @@ impl EntryService {
 
         while let Some(entry_change) = result.registry_repository.read_operation()? {
             match entry_change {
-                EntryOperationDto::Add { hash, name, description, secret } => {
+                EntryOperationDto::Add { hash, timestamp, name, description, secret } => {
                     result.last_hash = hash;
 
                     let model = EntryModel { 
+                        timestamp,
                         description, 
                         secret,
                     };
@@ -34,11 +35,12 @@ impl EntryService {
                         panic!("Registry is malformed. Can not add existing entry.");
                     }
                 },
-                EntryOperationDto::Set { hash, src_name, dst_name, dst_description, dst_secret } => {
+                EntryOperationDto::Set { hash, timestamp, src_name, dst_name, dst_description, dst_secret } => {
                     result.last_hash = hash;
 
                     if let Some(current) = result.entries.remove(&src_name) {
                         let model = EntryModel { 
+                            timestamp,
                             description: dst_description.unwrap_or(current.description), 
                             secret: dst_secret.unwrap_or(current.secret),
                         };
@@ -49,7 +51,7 @@ impl EntryService {
                         panic!("Registry is malformed. Can not set non existing entry.");
                     }
                 },
-                EntryOperationDto::Del { hash, name } => {
+                EntryOperationDto::Del { hash, timestamp: _, name } => {
                     result.last_hash = hash;
 
                     if result.entries.remove(&name).is_some() {
@@ -76,8 +78,13 @@ impl EntryService {
         }
         
         let secret = self.registry_repository.encrypt(&secret);
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis();
 
         let entry = EntryModel {
+            timestamp,
             description,
             secret,
         };
@@ -85,6 +92,7 @@ impl EntryService {
         let mut hasher = Sha3_256::new();
         hasher.update(&self.last_hash);
         hasher.update(&1i32.to_le_bytes());
+        hasher.update(&timestamp.to_le_bytes());
         hasher.update(name.as_bytes());
         hasher.update(entry.description.as_bytes());
         hasher.update(&entry.secret);
@@ -92,6 +100,7 @@ impl EntryService {
 
         let entry_operation = EntryOperationDto::Add { 
             hash: self.last_hash, 
+            timestamp,
             name: name.clone(), 
             description: entry.description.clone(), 
             secret: entry.secret.clone(),
@@ -115,10 +124,15 @@ impl EntryService {
         
         if let Some(current) = current {
             let dst_secret = dst_secret.map(|s| self.registry_repository.encrypt(&s));
-    
+            let timestamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis();
+
             let mut hasher = Sha3_256::new();
             hasher.update(&self.last_hash);
             hasher.update(&2i32.to_le_bytes());
+            hasher.update(&timestamp.to_le_bytes());
             hasher.update(src_name.as_bytes());
             if let Some(dst_name) = &dst_name {
                 hasher.update(dst_name.as_bytes());
@@ -133,6 +147,7 @@ impl EntryService {
     
             let entry_operation = EntryOperationDto::Set { 
                 hash: self.last_hash, 
+                timestamp,
                 src_name: src_name.clone(), 
                 dst_name: dst_name.clone(), 
                 dst_description: dst_description.clone(), 
@@ -140,6 +155,7 @@ impl EntryService {
             };
 
             let new_entry = EntryModel {
+                timestamp,
                 description: dst_description.unwrap_or(current.description),
                 secret: dst_secret.unwrap_or(current.secret),
             };
@@ -159,15 +175,22 @@ impl EntryService {
         if !self.entries.remove(&name).is_some() {
             panic!("Can not del non existing entry")
         }
+
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis();
         
         let mut hasher = Sha3_256::new();
         hasher.update(&self.last_hash);
         hasher.update(&3i32.to_le_bytes());
+        hasher.update(&timestamp.to_le_bytes());
         hasher.update(name.as_bytes());
         self.last_hash = hasher.finalize().into();
 
         let entry_operation = EntryOperationDto::Del { 
             hash: self.last_hash, 
+            timestamp,
             name: name.clone(), 
         };
 
