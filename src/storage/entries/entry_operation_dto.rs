@@ -1,6 +1,6 @@
 pub enum EntryOperationDto {
     Add {
-        hash: [u8; 32],
+        hash: [u8; 64],
         timestamp: u128,
         name: String,
         description: String,
@@ -8,7 +8,7 @@ pub enum EntryOperationDto {
     },
 
     Set {
-        hash: [u8; 32],
+        hash: [u8; 64],
         timestamp: u128,
         src_name: String,
         dst_name: Option<String>,
@@ -17,7 +17,7 @@ pub enum EntryOperationDto {
     },
 
     Del {
-        hash: [u8; 32],
+        hash: [u8; 64],
         timestamp: u128,
         name: String,
     },

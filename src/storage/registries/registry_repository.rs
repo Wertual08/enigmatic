@@ -143,7 +143,7 @@ impl RegistryRepository {
             let result = match op_code {
                 1 => {
                     EntryOperationDto::Add { 
-                        hash: read_bytes_array::<32>(&mut self.file)?, 
+                        hash: read_bytes_array::<64>(&mut self.file)?, 
                         timestamp: read_u128(&mut self.file)?,
                         name: read_string(&mut self.file)?.unwrap(), 
                         description: read_string(&mut self.file)?.unwrap(), 
@@ -152,7 +152,7 @@ impl RegistryRepository {
                 },
                 2 => {
                     EntryOperationDto::Set { 
-                        hash: read_bytes_array::<32>(&mut self.file)?, 
+                        hash: read_bytes_array::<64>(&mut self.file)?, 
                         timestamp: read_u128(&mut self.file)?,
                         src_name: read_string(&mut self.file)?.unwrap(), 
                         dst_name: read_string(&mut self.file)?, 
@@ -162,7 +162,7 @@ impl RegistryRepository {
                 },
                 3 => {
                     EntryOperationDto::Del { 
-                        hash: read_bytes_array::<32>(&mut self.file)?, 
+                        hash: read_bytes_array::<64>(&mut self.file)?, 
                         timestamp: read_u128(&mut self.file)?,
                         name: read_string(&mut self.file)?.unwrap(),
                     }

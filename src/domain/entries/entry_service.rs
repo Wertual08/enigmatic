@@ -8,7 +8,7 @@ use super::EntryModel;
 
 pub struct EntryService {
     registry_repository: RegistryRepository,
-    last_hash: [u8; 32],
+    last_hash: [u8; 64],
     pub entries: HashMap<String, EntryModel>,
 }
 
@@ -16,7 +16,7 @@ impl EntryService {
     pub fn new(registry_repository: RegistryRepository) -> Result<Self, io::Error> {
         let mut result = Self {
             registry_repository,
-            last_hash: [0u8; 32],
+            last_hash: [0u8; 64],
             entries: HashMap::new(),
         };
 
@@ -96,7 +96,7 @@ impl EntryService {
         hasher.update(name.as_bytes());
         hasher.update(entry.description.as_bytes());
         hasher.update(&entry.secret);
-        self.last_hash = hasher.finalize().into();
+        self.last_hash[0..32].copy_from_slice(&hasher.finalize());
 
         let entry_operation = EntryOperationDto::Add { 
             hash: self.last_hash, 
@@ -143,7 +143,7 @@ impl EntryService {
             if let Some(dst_secret) = &dst_secret {
                 hasher.update(&dst_secret);
             }
-            self.last_hash = hasher.finalize().into();
+            self.last_hash[0..32].copy_from_slice(&hasher.finalize());
     
             let entry_operation = EntryOperationDto::Set { 
                 hash: self.last_hash, 
@@ -186,7 +186,7 @@ impl EntryService {
         hasher.update(&3i32.to_le_bytes());
         hasher.update(&timestamp.to_le_bytes());
         hasher.update(name.as_bytes());
-        self.last_hash = hasher.finalize().into();
+        self.last_hash[0..32].copy_from_slice(&hasher.finalize());
 
         let entry_operation = EntryOperationDto::Del { 
             hash: self.last_hash, 
