@@ -2,6 +2,9 @@
 name = "enigmatic"
 version = "0.1.0"
 edition = "2021"
+description = "Secrets management cli"
+license = "GPL-3.0 license"
+license-file = "LICENSE.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
